@@ -1,0 +1,12 @@
+# Ignore everything
+*
+# Except
+!*/
+!.gitignore
+!*.py
+!*.sh
+!*.html
+!*.css
+!*.js
+!*.mq5
+!*.mqh
