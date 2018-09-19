@@ -18,5 +18,8 @@ login_manager.login_view =  "login"
 from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy(app)
 
+from .flask_broker import Broker
+broker = Broker(app)
+
 # Load view endpoints
 from . import views

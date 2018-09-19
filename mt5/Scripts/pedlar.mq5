@@ -11,7 +11,7 @@
 #include <libzmq.mqh>
 #include <Trade\Trade.mqh>
 //--- input parameters
-input string   endpoint="tcp://localhost:7100";
+input string   endpoint="tcp://*:7100";
 input long polltimeout=2000; // miliseconds
 //+------------------------------------------------------------------+
 //| Script program start function                                    |
@@ -62,44 +62,38 @@ void OnStart()
      }
 //--- MAIN LOOP
 // Setup polling
+   pollitem itema={0};
+   itema.socket=socket;
+   itema.events=ZMQ_POLLIN;
    pollitem items[1];
-   items[0].socket=socket;
-   items[0].fd=0;
-   items[0].events=ZMQ_POLLIN;
-   items[0].revents=0;
+   items[0]=itema;
    Print("Starting server loop...");
    while(!IsStopped())
      {
       // Check any messages
       int num_active=zmq_poll(items,1,polltimeout);
-      Print("NUM ACTIVE:",num_active);
       if(num_active==0) continue;
       // Receive request
-      requestbuf req;
-      req.action=0;
-      req.order_id=0;
-      req.volume=0;
+      requestbuf req={0,0,0};
       int recved=zmq_recv(socket,req,sizeof(req),NULL);
       if(recved!=sizeof(req)) Print("Request buffer received size did not match.");
       // Handle request
-      int res=1;
       switch(req.action)
         {
          case 1: // Close
-            res=trade.PositionClose(req.order_id);
+            trade.PositionClose(req.order_id);
             break;
          case 2: // Buy
-            res=trade.Buy(req.volume);
+            trade.Buy(req.volume);
             break;
          case 3: // Sell
-            res=trade.Sell(req.volume);
+            trade.Sell(req.volume);
             break;
          default:
             break;
         }
       // Form response
       responsebuf resp;
-      resp.retcode=res;
       resp.order_id=trade.ResultDeal();
       resp.price=trade.ResultPrice();
       // Send response

@@ -98,16 +98,15 @@ struct barbuf
 //+------------------------------------------------------------------+
 struct requestbuf
   {
-   uchar             action;
    ulong             order_id;
    double            volume;
+   uchar             action;
   };
 //+------------------------------------------------------------------+
 //| Buffer to store response data                                    |
 //+------------------------------------------------------------------+
 struct responsebuf
   {
-   int               retcode;
    ulong             order_id;
    double            price;
   };
@@ -118,8 +117,11 @@ struct pollitem
   {
    long              socket;
    int               fd;
+   char              pad1[4]; // Fix alignment to 8 bytes
    short             events;
+   char              pad2[6]; // 6 byte alignment
    short             revents;
+   char              pad3[6]; // 6 byte alignment
   };
 //+------------------------------------------------------------------+
 //| DLL imports                                                      |

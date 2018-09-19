@@ -1,8 +1,8 @@
 """Endpoints for the web application."""
-from flask import render_template, redirect, url_for
+from flask import render_template, redirect, url_for, jsonify
 from flask_login import login_user, login_required, logout_user
 
-from . import app, db
+from . import app, db, broker
 from .forms import UserPasswordForm
 from .models import User
 
@@ -31,7 +31,12 @@ def login():
 @app.route('/')
 @login_required
 def index():
-  return "Hello World!"
+  return render_template('index.html')
+
+@app.route('/buy')
+@login_required
+def buy():
+  return jsonify(broker.buy())
 
 @app.route('/logout')
 def logout():

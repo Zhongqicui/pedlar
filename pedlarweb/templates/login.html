@@ -3,10 +3,10 @@
 {% block body %}
 <div class="w3-container w3-quarter w3-margin-top w3-display-middle">
 <form class="w3-card-4" method="POST">
-  <header class="w3-container w3-blue">
+  <header class="w3-container w3-black">
     <h2>Pedlar</h2>
   </header>
-  <div class="w3-container">
+  <div class="w3-container w3-white">
     {{ form.csrf_token }}
     {% for field in form if field.type != "CSRFTokenField" %}
     <p><label>{{ field.label }}</label>{{ field(class_="w3-input") }}</p>
