@@ -18,6 +18,7 @@ context = zmq.Context()
 class Agent:
   """Base class for Pedlar trading agent."""
   name = "agent"
+  polltimeout = 2000 # milliseconds
 
   def __init__(self, username="nobody", password="",
                ticker="tcp://localhost:7000",
@@ -25,7 +26,7 @@ class Agent:
     self.username = username
     self.password = password
     self.ticker = ticker
-    self.socket = None
+    self.poller = None
     self.endpoint = endpoint
     self.isconnected = False
 
@@ -41,15 +42,17 @@ class Agent:
 
   def connect(self):
     """Attempt to connect ticker and pedlarweb endpoints."""
-    self.socket = context.socket(zmq.SUB)
+    socket = context.socket(zmq.SUB)
     # Set topic filter, this is a binary prefix
     # to check for each incoming message
     # set from server as uchar topic = X
     # We'll subsribe to everything for now
-    self.socket.setsockopt(zmq.SUBSCRIBE, bytes())
+    socket.setsockopt(zmq.SUBSCRIBE, bytes())
     # socket.setsockopt(zmq.SUBSCRIBE, bytes.fromhex('00'))
     logger.info("Connecting to ticker: %s", self.ticker)
-    self.socket.connect(self.ticker)
+    socket.connect(self.ticker)
+    self.poller = zmq.Poller()
+    self.poller.register(socket, zmq.POLLIN)
     self.isconnected = True
 
   def on_tick(self, bid, ask):
@@ -69,7 +72,10 @@ class Agent:
     logger.info("Starting main trading loop...")
     try:
       while True:
-        raw = self.socket.recv() # recv will BLOCK
+        socks = self.poller.poll(self.polltimeout)
+        if not socks:
+          continue
+        raw = socks[0][0].recv()
         # unpack bytes https://docs.python.org/3/library/struct.html
         if len(raw) == 17:
           # We have tick data
