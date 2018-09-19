@@ -8,10 +8,11 @@
 #property version   "1.00"
 #include <libzmq.mqh>
 //--- input parameters
-input string endpoint="tcp://*:7777";
+input string endpoint="tcp://*:7000";
 //--- global variables
 long ctx=NULL;
 long socket=NULL;
+datetime lastbar_date=0;
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
 //+------------------------------------------------------------------+
@@ -61,6 +62,8 @@ int OnInit()
       Print("Failed to bind socket: ",zmq_errno());
       return(INIT_FAILED);
      }
+// Set the initial bar time to detect new bars
+   lastbar_date=(datetime)SeriesInfoInteger(Symbol(),Period(),SERIES_LASTBAR_DATE);
 //---
    return(INIT_SUCCEEDED);
   }
@@ -88,19 +91,33 @@ void OnDeinit(const int reason)
 void OnTick()
   {
 //---
+// Publish tick data
    MqlTick last_tick;
    if(SymbolInfoTick(Symbol(),last_tick))
      {
-      Print(last_tick.time,": Bid = ",last_tick.bid,
-            " Ask = ",last_tick.ask,"  Volume = ",last_tick.volume);
       tickbuf buf;
       buf.topic=0; // Tick data is topic 0
       buf.bid = last_tick.bid;
       buf.ask = last_tick.ask;
       int sent=zmq_send(socket,buf,sizeof(buf),NULL);
-      if(sent != sizeof(buf)) Print("Buffer send size did not match.");
+      if(sent!=sizeof(buf)) Print("Tick buffer send size did not match.");
      }
    else Print("SymbolInfoTick() failed, error = ",GetLastError());
 
+// Check and publish bar data
+   datetime current_bardate=(datetime)SeriesInfoInteger(Symbol(),Period(),SERIES_LASTBAR_DATE);
+   if(current_bardate>lastbar_date)
+     {
+      lastbar_date=current_bardate;
+      barbuf buf;
+      buf.topic=1; // Bar data is topic 1
+      buf.open=iOpen(Symbol(),Period(),1); // Take last bar, shift=1
+      buf.high=iHigh(Symbol(), Period(), 1);
+      buf.low=iLow(Symbol(),Period(),1);
+      buf.close=iClose(Symbol(),Period(),1);
+      int sent=zmq_send(socket, buf, sizeof(buf), NULL);
+      if(sent!=sizeof(buf)) Print("Bar buffer send size did not match.");
+      Print("Bar:",buf.open,buf.high,buf.low,buf.close);
+     }
   }
 //+------------------------------------------------------------------+

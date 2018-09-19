@@ -79,6 +79,17 @@ struct tickbuf
    double            ask;
   };
 //+------------------------------------------------------------------+
+//| Buffer to store bar data                                         |
+//+------------------------------------------------------------------+
+struct barbuf
+  {
+   uchar             topic;
+   double            open;
+   double            high;
+   double            low;
+   double            close;
+  };
+//+------------------------------------------------------------------+
 //| DLL imports                                                      |
 //+------------------------------------------------------------------+
 // Reference: http://api.zeromq.org/
@@ -92,6 +103,7 @@ int zmq_close(long socket);
 int zmq_bind(long socket,uchar &endpoint[]);
 int zmq_connect(long socket,uchar &endpoint[]);
 int zmq_send(long socket,tickbuf &buf,int len,int flags);
+int zmq_send(long socket,barbuf &buf,int len,int flags);
 int zmq_send(long socket,string buf,int len,int flags);
 int zmq_recv(long socket,double &buf[],int len,int flags);
 #import
