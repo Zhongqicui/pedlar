@@ -6,6 +6,7 @@
 #property copyright "nuric"
 #property link      "https://github.com/nuric/pedlar"
 #property version   "1.00"
+//--- includes
 #include <libzmq.mqh>
 //--- input parameters
 input string endpoint="tcp://*:7000";
@@ -83,7 +84,6 @@ void OnDeinit(const int reason)
       Print("Failed to terminate context: ",zmq_errno());
      }
    Print("Expert deinitialised.");
-
   }
 //+------------------------------------------------------------------+
 //| Expert tick function                                             |

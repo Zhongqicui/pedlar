@@ -22,6 +22,10 @@
 #define ZMQ_XPUB 9
 #define ZMQ_XSUB 10
 #define ZMQ_STREAM 11
+/* Polling options. */
+#define ZMQ_POLLIN 1
+#define ZMQ_POLLOUT 2
+#define ZMQ_POLLERR 4
 /* Socket options. */
 #define ZMQ_AFFINITY 4
 #define ZMQ_IDENTITY 5
@@ -90,6 +94,34 @@ struct barbuf
    double            close;
   };
 //+------------------------------------------------------------------+
+//| Buffer to store request data                                     |
+//+------------------------------------------------------------------+
+struct requestbuf
+  {
+   uchar             action;
+   ulong             order_id;
+   double            volume;
+  };
+//+------------------------------------------------------------------+
+//| Buffer to store response data                                    |
+//+------------------------------------------------------------------+
+struct responsebuf
+  {
+   int               retcode;
+   ulong             order_id;
+   double            price;
+  };
+//+------------------------------------------------------------------+
+//| Buffer to store response data                                    |
+//+------------------------------------------------------------------+
+struct pollitem
+  {
+   long              socket;
+   int               fd;
+   short             events;
+   short             revents;
+  };
+//+------------------------------------------------------------------+
 //| DLL imports                                                      |
 //+------------------------------------------------------------------+
 // Reference: http://api.zeromq.org/
@@ -105,6 +137,8 @@ int zmq_connect(long socket,uchar &endpoint[]);
 int zmq_send(long socket,tickbuf &buf,int len,int flags);
 int zmq_send(long socket,barbuf &buf,int len,int flags);
 int zmq_send(long socket,string buf,int len,int flags);
-int zmq_recv(long socket,double &buf[],int len,int flags);
+int zmq_poll(pollitem &items[],int nitems,long timeout);
+int zmq_recv(long socket,requestbuf &buf,int len,int flags);
+int zmq_send(long socket,responsebuf &buf,int len,int flags);
 #import
 //+------------------------------------------------------------------+
