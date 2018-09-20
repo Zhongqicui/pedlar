@@ -1,11 +1,9 @@
 """Broker extension for Flask."""
-import logging
 import struct
-from flask import current_app, _app_ctx_stack
+from flask import current_app, _app_ctx_stack, abort
 
 import zmq
 
-logger = logging.getLogger(__name__)
 # Context are thread safe already,
 # we'll create one global one for all sockets
 context = zmq.Context()
@@ -27,7 +25,7 @@ class Broker:
   def connect(self):
     """Connect to broker server."""
     socket = context.socket(zmq.REQ)
-    logger.info("Connecting to broker: %s", current_app.config['BROKER_URL'])
+    current_app.logger.debug("Connecting to broker: %s", current_app.config['BROKER_URL'])
     socket.connect(current_app.config['BROKER_URL'])
     return socket
 
@@ -38,6 +36,7 @@ class Broker:
     if ctx is not None:
       if not hasattr(ctx, 'broker'):
         socket = self.connect()
+        socket.set(zmq.LINGER, 2000)
         poller = zmq.Poller()
         poller.register(socket, zmq.POLLIN)
         ctx.broker = (socket, poller)
@@ -48,6 +47,17 @@ class Broker:
     ctx = _app_ctx_stack.top
     if hasattr(ctx, 'broker'):
       ctx.broker[0].close()
+
+  @staticmethod
+  def validate(req):
+    """Validate given request.
+    :return: true on successful validation false otherwise
+    """
+    cond = (req and req.get('order_id', 0) >= 0 and
+            req.get('volume', 0.01) >= 0.01 and
+            req.get('volume', 0.01) <= 1.0 and
+            req.get('action', 0) in (0, 1, 2, 3))
+    return cond
 
   def talk(self, order_id=0, volume=0.01, action=0):
     """Round of request-response with broker."""
@@ -60,17 +70,28 @@ class Broker:
     if not socks:
       raise IOError("Broker timeout on response.")
     resp = socks[0][0].recv()
-    # ulong order_id, double price
-    return struct.unpack('Ld', resp)
+    # ulong order_id, double price, uint retcode
+    order_id, price, retcode = struct.unpack('LdI', resp)
+    return {'order_id': order_id, 'price': price, 'retcode': retcode}
 
-  def buy(self, volume=0.01):
-    """Place a long position."""
+  def handle(self, request):
+    """Handle a client request."""
+    # Validate request first
+    if not self.validate(request):
+      abort(400)
+    # Make the request to the broker
     try:
-      order_id, price = self.talk(volume=volume, action=2)
-      return {'order_id': order_id, 'price': price}
-    except Exception as e:
-      return {'error': str(e)}
-
-  def sell(self, volume=0.01):
-    """Place a short position."""
-    pass
+      resp = self.talk(**request)
+      current_app.logger.critical("HERE" + str(resp))
+    except IOError:
+      current_app.logger.warn("Broker response timed out.")
+      abort(504) # Gateway Timeout
+    # Check response conditions
+    if request['action'] in (2, 3) and resp['order_id'] == 0:
+      # We asked for a trade but did not get an id
+      current_app.logger.warn("Broker did not place order.")
+      abort(500)
+    if resp['retcode'] != 0:
+      current_app.logger.warn("Broker returned a non-zero return code.")
+      abort(500)
+    return resp
