@@ -1,7 +1,10 @@
 """mt5 zmq test client."""
 import argparse
 import logging
+import re
 import struct
+
+import requests
 import zmq
 
 logger = logging.getLogger(__name__)
@@ -19,16 +22,17 @@ class Agent:
   """Base class for Pedlar trading agent."""
   name = "agent"
   polltimeout = 2000 # milliseconds
+  csrf_re = re.compile('name="csrf_token" type="hidden" value="(.+)"')
 
   def __init__(self, username="nobody", password="",
                ticker="tcp://localhost:7000",
                endpoint="http://localhost:8000"):
     self.username = username
     self.password = password
+    self.endpoint = endpoint
+    self.session = None
     self.ticker = ticker
     self.poller = None
-    self.endpoint = endpoint
-    self.isconnected = False
 
   @classmethod
   def from_args(cls, parents=None):
@@ -41,7 +45,27 @@ class Agent:
     return cls(**vars(parser.parse_args()))
 
   def connect(self):
-    """Attempt to connect ticker and pedlarweb endpoints."""
+    """Attempt to connect pedlarweb and ticker endpoints."""
+    #-- pedlarweb connection
+    # We will adapt to the existing web login rather than
+    # creating a new api endpoint for agent requests
+    logger.info("Attempting to login to Pedlar web.")
+    session = requests.Session()
+    r = session.get(self.endpoint+"/login") # CSRF protected
+    r.raise_for_status()
+    try:
+      csrf_token = csrf_re.search(r.text).group(1)
+    except AttributeError:
+      raise Exception("Could not find CSRF token in auth.")
+    payload = {'username': self.username, 'password': self.password,
+               'csrf_token': csrf_token}
+    r = session.post(self.endpoint+"/login", data=payload, allow_redirects=False)
+    r.raise_for_status()
+    if not r.is_redirect or not r.headers['Location'].endswith('/'):
+      raise Exception("Failed login with Pedlar web.")
+    self.session = session
+    logger.info("Pedlar web authentication successful.")
+    #-- ticker connection
     socket = context.socket(zmq.SUB)
     # Set topic filter, this is a binary prefix
     # to check for each incoming message
@@ -53,7 +77,6 @@ class Agent:
     socket.connect(self.ticker)
     self.poller = zmq.Poller()
     self.poller.register(socket, zmq.POLLIN)
-    self.isconnected = True
 
   def on_tick(self, bid, ask):
     """On tick handler."""
