@@ -78,24 +78,28 @@ void OnStart()
       int recved=zmq_recv(socket,req,sizeof(req),NULL);
       if(recved!=sizeof(req)) Print("Request buffer received size did not match.");
       // Handle request
+      uint res=0;
+      responsebuf resp;
+      resp.profit = 0;
       switch(req.action)
         {
          case 1: // Close
-            trade.PositionClose(req.order_id);
+            res=trade.PositionClose(req.order_id);
+            resp.profit = PositionGetDouble(POSITION_PROFIT);
             break;
          case 2: // Buy
-            trade.Buy(req.volume);
+            res=trade.Buy(req.volume);
             break;
          case 3: // Sell
-            trade.Sell(req.volume);
+            res=trade.Sell(req.volume);
             break;
          default:
             break;
         }
       // Form response
-      responsebuf resp;
-      resp.order_id=trade.ResultDeal();
+      resp.order_id=trade.ResultOrder();
       resp.price=trade.ResultPrice();
+      resp.retcode= (res && trade.ResultRetcode() != TRADE_RETCODE_DONE);
       // Send response
       int sent=zmq_send(socket,resp,sizeof(resp),NULL);
       if(sent!=sizeof(resp)) Print("Response buffer sent size did not match.");

@@ -109,6 +109,8 @@ struct responsebuf
   {
    ulong             order_id;
    double            price;
+   double            profit;
+   uint              retcode;
   };
 //+------------------------------------------------------------------+
 //| Buffer to store response data                                    |

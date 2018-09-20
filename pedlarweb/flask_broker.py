@@ -71,9 +71,9 @@ class Broker:
     if not socks:
       raise IOError("Broker timeout on response.")
     resp = socks[0][0].recv()
-    # ulong order_id, double price, uint retcode
-    order_id, price, retcode = struct.unpack('LdI', resp)
-    return {'order_id': order_id, 'price': price, 'retcode': retcode}
+    # ulong order_id, double price, double profit, uint retcode
+    order_id, price, profit, retcode = struct.unpack('LddI', resp)
+    return {'order_id': order_id, 'price': price, 'profit': profit, 'retcode': retcode}
 
   def handle(self, request):
     """Handle a client request."""
@@ -87,11 +87,11 @@ class Broker:
       current_app.logger.warn("Broker response timed out.")
       abort(504) # Gateway Timeout
     # Check response conditions
+    if resp['retcode'] != 0:
+      current_app.logger.warn("Broker returned a non-zero return code.")
+      abort(500)
     if request['action'] in (2, 3) and resp['order_id'] == 0:
       # We asked for a trade but did not get an id
       current_app.logger.warn("Broker did not place order.")
-      abort(500)
-    if resp['retcode'] != 0:
-      current_app.logger.warn("Broker returned a non-zero return code.")
       abort(500)
     return resp

@@ -19,6 +19,10 @@ class BasicAgent(Agent):
     """On order handler."""
     print("ORDER:", order)
 
+  def on_order_close(self, order, profit):
+    """On order close handler."""
+    print("PROFIT:", profit)
+
   def on_tick(self, bid, ask):
     """On tick handler."""
     print("TICK:", bid, ask)

@@ -91,6 +91,7 @@ class Agent:
     # Clean up remaining orders
     self.close()
     # Ease the burden on server and logout
+    logger.info("Logging out of Pedlar web.")
     r = self.session.get(self.endpoint+"/logout", allow_redirects=False)
     if not r.is_redirect:
       logger.warn("Could not logout from Pedlar web.")
@@ -148,6 +149,10 @@ class Agent:
     """
     self._place_order(otype="sell", volume=volume, single=single, reverse=reverse)
 
+  def on_order_close(self, order, profit):
+    """Called on successfull order close."""
+    pass
+
   def close(self, order_ids=None):
     """Close open all orders or given ids
     :param order_ids: only close these orders
@@ -155,12 +160,13 @@ class Agent:
     """
     oids = order_ids if order_ids is not None else list(self.orders.keys())
     for oid in oids:
-      logger.info("Closing order %s", oid)
       try:
-        self.talk(order_id=oid, action=1)
-        self.orders.pop(oid, None)
-      except:
-        logger.error("Failed to close order: %s", oid)
+        resp = self.talk(order_id=oid, action=1)
+        order = self.orders.pop(oid)
+        logger.info("Closed order %s with profit %s", oid, resp['profit'])
+        self.on_order_close(order, resp['profit'])
+      except Exception as e:
+        logger.error("Failed to close order %s: %s", oid, str(e))
         return False
     return True
 
