@@ -8,7 +8,7 @@ from .agent import Agent
 class BasicAgent(Agent):
   """Basic trading agent."""
   name = "alice"
-  def __init__(self, histsize=20, **kwargs):
+  def __init__(self, histsize=40, **kwargs):
     self.histsize = histsize
     self.past_ticks = deque(maxlen=histsize)
     self.period = 0
@@ -50,6 +50,6 @@ if __name__ == "__main__":
   # Requests dumps a lot of logs, we will reduce its verbosity
   logging.getLogger('requests').setLevel(logging.ERROR)
   parser = argparse.ArgumentParser(add_help=False)
-  parser.add_argument("--histsize", default=20, type=int, help="Agent tick history size.")
+  parser.add_argument("--histsize", default=40, type=int, help="Agent tick history size.")
   agent = BasicAgent.from_args(parents=[parser])
   agent.run()

@@ -19,7 +19,7 @@ class Broker:
   def init_app(self, app):
     """Initialise extension."""
     app.config.setdefault('BROKER_URL', "tcp://localhost:7100")
-    app.config.setdefault('BROKER_POLLTIMEOUT', 500) # milliseconds
+    app.config.setdefault('BROKER_POLLTIMEOUT', 1000) # milliseconds
     app.teardown_appcontext(self.teardown)
 
   def connect(self):
@@ -46,6 +46,7 @@ class Broker:
     """Clean up socket."""
     ctx = _app_ctx_stack.top
     if hasattr(ctx, 'broker'):
+      current_app.logger.debug("Disconnecting from broker: %s", current_app.config['BROKER_URL'])
       ctx.broker[0].close()
 
   @staticmethod
@@ -82,7 +83,6 @@ class Broker:
     # Make the request to the broker
     try:
       resp = self.talk(**request)
-      current_app.logger.critical("HERE" + str(resp))
     except IOError:
       current_app.logger.warn("Broker response timed out.")
       abort(504) # Gateway Timeout

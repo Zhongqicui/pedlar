@@ -86,6 +86,15 @@ class Agent:
     self.poller = zmq.Poller()
     self.poller.register(socket, zmq.POLLIN)
 
+  def disconnect(self):
+    """Close server connection gracefully in any."""
+    # Clean up remaining orders
+    self.close()
+    # Ease the burden on server and logout
+    r = self.session.get(self.endpoint+"/logout", allow_redirects=False)
+    if not r.is_redirect:
+      logger.warn("Could not logout from Pedlar web.")
+
   def on_order(self, order):
     """Called on successful order."""
     pass
@@ -114,7 +123,7 @@ class Agent:
       # There is already an order of the same type
       return
     # Request the actual order
-    logger.debug("Placing a %s order.", otype)
+    logger.info("Placing a %s order.", otype)
     try:
       resp = self.talk(volume=volume, action=2 if otype == "buy" else 3)
       order = Order(id=resp['order_id'], price=resp['price'], type=otype)
@@ -144,8 +153,9 @@ class Agent:
     :param order_ids: only close these orders
     :return: true on success false otherwise
     """
-    for oid in order_ids or self.orders.keys():
-      logger.debug("Closing order %s", oid)
+    oids = order_ids if order_ids is not None else list(self.orders.keys())
+    for oid in oids:
+      logger.info("Closing order %s", oid)
       try:
         self.talk(order_id=oid, action=1)
         self.orders.pop(oid, None)
@@ -194,7 +204,4 @@ class Agent:
           self.on_bar(bo, bh, bl, bc)
     finally:
       logger.info("Stopping agent...")
-      # Ease the burden on server and logout
-      r = self.session.get(self.endpoint+"/logout", allow_redirects=False)
-      if not r.is_redirect:
-        logger.warn("Could not logout from Pedlar web.")
+      self.disconnect()
