@@ -117,7 +117,7 @@ void OnTick()
       buf.close=iClose(Symbol(),Period(),1);
       int sent=zmq_send(socket, buf, sizeof(buf), NULL);
       if(sent!=sizeof(buf)) Print("Bar buffer send size did not match.");
-      Print("Bar:",buf.open,buf.high,buf.low,buf.close);
+      //Print("Bar:",buf.open,buf.high,buf.low,buf.close);
      }
   }
 //+------------------------------------------------------------------+

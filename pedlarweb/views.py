@@ -21,26 +21,26 @@ def login():
         user.last_login = datetime.datetime.now()
         db.session.commit()
         return redirect(url_for('index'))
-      else:
-        return redirect(url_for('login'))
-    else:
-      # Create new user
-      user = User(username=form.username.data, password=form.password.data)
-      db.session.add(user)
-      db.session.commit()
-      login_user(user)
-      app.logger.info("New user: %s", user.username)
-      return redirect(url_for('index'))
+      return redirect(url_for('login'))
+    # Create new user
+    user = User(username=form.username.data, password=form.password.data)
+    db.session.add(user)
+    db.session.commit()
+    login_user(user)
+    app.logger.info("New user: %s", user.username)
+    return redirect(url_for('index'))
   return render_template('login.html', form=form)
 
 @app.route('/')
 @login_required
 def index():
+  """Index page."""
   return render_template('index.html')
 
 @app.route('/trade', methods=['POST'])
 @login_required
 def trade():
+  """Client to broker endpoint."""
   # Pass the trade request to broker
   req = request.json
   agent_name = req.pop('name', 'nobody')
@@ -49,7 +49,7 @@ def trade():
     # Record the new order
     order = Order(id=resp['order_id'], user_id=current_user.id,
                   type="BUY" if req['action'] == 2 else "SELL",
-                  price_open=resp['price'])
+                  agent=agent_name, price_open=resp['price'])
     db.session.add(order)
     db.session.commit()
   elif resp['retcode'] == 0 and req['action'] == 1:
@@ -63,5 +63,6 @@ def trade():
 
 @app.route('/logout')
 def logout():
+  """Logout and redirect user."""
   logout_user()
   return redirect(url_for('login'))

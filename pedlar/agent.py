@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 logger.info("libzmq: %s", zmq.zmq_version())
 logger.info("pyzmq: %s", zmq.pyzmq_version())
 
-# pylint: disable=no-member
+# pylint: disable=broad-except
 
 Order = namedtuple('Order', ['id', 'price', 'type'])
 
@@ -94,7 +94,7 @@ class Agent:
     logger.info("Logging out of Pedlar web.")
     r = self.session.get(self.endpoint+"/logout", allow_redirects=False)
     if not r.is_redirect:
-      logger.warn("Could not logout from Pedlar web.")
+      logger.warning("Could not logout from Pedlar web.")
 
   def on_order(self, order):
     """Called on successful order."""
@@ -130,8 +130,8 @@ class Agent:
       order = Order(id=resp['order_id'], price=resp['price'], type=otype)
       self.orders[order.id] = order
       self.on_order(order)
-    except:
-      logger.error("Failed to place %s order.", otype)
+    except Exception as e:
+      logger.error("Failed to place %s order: %s", otype, str(e))
 
   def buy(self, volume=0.01, single=True, reverse=True):
     """Place a new buy order and store it in self.orders

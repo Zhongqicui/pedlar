@@ -22,7 +22,8 @@ class Broker:
     app.config.setdefault('BROKER_POLLTIMEOUT', 1000) # milliseconds
     app.teardown_appcontext(self.teardown)
 
-  def connect(self):
+  @staticmethod
+  def connect():
     """Connect to broker server."""
     socket = context.socket(zmq.REQ)
     current_app.logger.debug("Connecting to broker: %s", current_app.config['BROKER_URL'])
@@ -33,16 +34,16 @@ class Broker:
   def connection(self):
     """Broker connection socket."""
     ctx = _app_ctx_stack.top
-    if ctx is not None:
-      if not hasattr(ctx, 'broker'):
-        socket = self.connect()
-        socket.set(zmq.LINGER, 2000)
-        poller = zmq.Poller()
-        poller.register(socket, zmq.POLLIN)
-        ctx.broker = (socket, poller)
-      return ctx.broker
+    if not hasattr(ctx, 'broker'):
+      socket = self.connect()
+      socket.set(zmq.LINGER, 2000)
+      poller = zmq.Poller()
+      poller.register(socket, zmq.POLLIN)
+      ctx.broker = (socket, poller)
+    return ctx.broker
 
-  def teardown(self, _):
+  @staticmethod
+  def teardown(_):
     """Clean up socket."""
     ctx = _app_ctx_stack.top
     if hasattr(ctx, 'broker'):
