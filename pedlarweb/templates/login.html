@@ -3,8 +3,8 @@
 {% block body %}
 <div class="w3-container w3-quarter w3-margin-top w3-display-middle">
 <form class="w3-card-4" method="POST">
-  <header class="w3-container w3-black">
-    <h2>Pedlar</h2>
+  <header class="w3-container w3-theme">
+    <h2><i class="material-icons">people</i> Pedlar Login</h1>
   </header>
   <div class="w3-container w3-white">
     {{ form.csrf_token }}
@@ -12,8 +12,10 @@
     <p><label>{{ field.label }}</label>{{ field(class_="w3-input") }}</p>
     {% endfor %}
     <p><button class="w3-button w3-section w3-blue w3-ripple">Log in</button></p>
-    <p>An account will be automatically created if one does not exist already.</p>
   </div>
+  <footer class="w3-container w3-theme">
+    <p>An account will be automatically created if one does not exist already.</p>
+  </footer>
 </form>
 </div>
 {% endblock %}
