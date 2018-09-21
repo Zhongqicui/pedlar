@@ -10,6 +10,7 @@ class User(db.Model):
   _password = db.Column("password", db.String(128), nullable=False)
   is_admin = db.Column(db.Boolean(), nullable=False, default=False)
   orders = db.relationship('Order', cascade='all,delete', backref='user', lazy=True)
+  balance = db.Column(db.Float(), nullable=False, default=0)
   last_login = db.Column(db.DateTime(), nullable=False, default=datetime.datetime.now())
   joined = db.Column(db.DateTime(), nullable=False, default=datetime.datetime.now())
 

@@ -52,34 +52,63 @@
       </div>
       <br>
     </div> <!-- End Left Column -->
-    <!-- Middle Column -->
-    <div class="w3-col m7">
-      <div class="w3-row-padding">
-        <div class="w3-col m12">
+    <div id="app"> <!-- Vue Wrapper for dynamic content -->
+      {% raw %}
+      <!-- Middle Column -->
+      <div class="w3-col m7">
+        <div class="w3-row-padding">
           <div class="w3-card w3-white">
-            <div class="w3-container w3-padding">
-              <h6 class="w3-opacity">Social Media template by w3.css</h6>
-              <p contenteditable="true" class="w3-border w3-padding">Status: Feeling Blue</p>
-              <button type="button" class="w3-button w3-theme"><i class="fa fa-edit"></i>  Post</button> 
-            </div>
+            <table class="w3-table w3-striped">
+              <tr class="w3-theme-l3">
+                <th>Name</th>
+                <th>Balance</th>
+              </tr>
+              <tr v-for="l in leaders">
+                <td>{{ l.username }}</td>
+                <td>{{ l.balance }}</td>
+              </tr>
+            </table>
           </div>
+          <br>
+          <div class="w3-card w3-white">
+            <table class="w3-table w3-striped">
+              <tr class="w3-theme-d3">
+                <th>Agent</th>
+                <th>Type</th>
+                <th>Price Open</th>
+                <th>Price Close</th>
+                <th>Profit</th>
+                <th>Created</th>
+                <th>Closed</th>
+              </tr>
+              <tr v-for="o in orders">
+                <td>{{ o.agent }}</td>
+                <td>{{ o.type }}</td>
+                <td>{{ o.price_open }}</td>
+                <td>{{ o.price_close }}</td>
+                <td>{{ o.profit }}</td>
+                <td>{{ o.created.toLocaleString() }}</td>
+                <td>{{ o.closed.toLocaleString() }}</td>
+              </tr>
+            </table>
+          </div>
+          <br>
         </div>
-      </div>
-    </div> <!-- End Middle Column -->
+      </div> <!-- End Middle Column -->
 
-    <!-- Right Column -->
-    {% raw %}
-    <div id="app" class="w3-col m3">
-      <div class="w3-card w3-white">
-        <div class="w3-container">
-          <div id="chatbox" class="w3-panel w3-border" style="min-height:80vh;max-height:80vh;overflow-y:scroll">
-            <p v-for="m in messages" style="white-space:pre-wrap"><b>{{ m.username }}:</b> {{ m.msg }}</p>
+      <!-- Right Column -->
+      <div class="w3-col m3">
+        <div class="w3-card w3-white">
+          <div class="w3-container">
+            <div id="chatbox" class="w3-panel w3-border" style="min-height:80vh;max-height:80vh;overflow-y:scroll">
+              <p v-for="m in messages" style="white-space:pre-wrap"><b>{{ m.username }}:</b> {{ m.msg }}</p>
+            </div>
+            <textarea id="chatinput" v-on:keypress.enter.exact.prevent="sendchat" class="w3-input w3-margin-bottom" style="max-width:100%" placeholder="message"></textarea>
           </div>
-          <textarea id="chatinput" v-on:keypress.enter.exact.prevent="sendchat" class="w3-input w3-margin-bottom" style="max-width:100%" placeholder="message"></textarea>
         </div>
-      </div>
-      <br>
-    </div> <!-- End Right Column -->
+        <br>
+      </div> <!-- End Right Column -->
+    </div> <!-- End Vue Wrapper -->
     {% endraw %}
     
   </div> <!-- End Grid -->
@@ -118,12 +147,12 @@ var socket = io.connect('http://' + document.domain + ':' + location.port);
 socket.on('connect', function() {
   console.log("Socket connected.")
 });
-var objDiv = document.getElementById("chatbox");
-objDiv.scrollTop = objDiv.scrollHeight;
 // Setup Vue dynamic components
 var app = new Vue({
   el: '#app',
   data: {
+    leaders: [],
+    orders: [], // Vue is unhappy with dict changes so use array
     messages: []
   },
   // Event handlers
@@ -135,12 +164,44 @@ var app = new Vue({
         socket.emit('chat', payload);
         event.target.value = "";
       }
+    },
+    addmessage: function(msg) {
+      this.messages.push(msg);
+      var container = this.$el.querySelector("#chatbox");
+      container.scrollTop = container.scrollHeight;
     }
   }
 });
 // Handle incoming socket messages
-socket.on('chat', function(data) {
-  app.messages.push(data);
+socket.on('chat', app.addmessage);
+socket.on('leaderboard', function(leaders) {
+  app.leaders = leaders;
+});
+
+function cleanOrder(order) {
+  if (order.closed) {
+    order.closed = new Date(order.closed);
+  } else {
+    order.closed = { toLocaleString: () => "" }
+  }
+  order.created = new Date(order.created);
+}
+
+socket.on('orders', function(orders) {
+  for(i in orders) {
+    cleanOrder(orders[i]);
+  }
+  app.orders = orders;
+});
+socket.on('order', function(order) {
+  cleanOrder(order);
+  // Check for updating order
+  idx = app.orders.findIndex((x) => { return x.id == order.id; });
+  if (idx == -1) {
+    app.orders.unshift(order);
+  } else {
+    Vue.set(app.orders, idx, order);
+  }
 });
 </script>
 
