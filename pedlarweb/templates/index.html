@@ -68,14 +68,19 @@
     </div> <!-- End Middle Column -->
 
     <!-- Right Column -->
-    <div class="w3-col m3">
+    {% raw %}
+    <div id="app" class="w3-col m3">
       <div class="w3-card w3-white">
         <div class="w3-container">
-          <p>Chat:</p>
+          <div id="chatbox" class="w3-panel w3-border" style="min-height:80vh;max-height:80vh;overflow-y:scroll">
+            <p v-for="m in messages" style="white-space:pre-wrap"><b>{{ m.username }}:</b> {{ m.msg }}</p>
+          </div>
+          <textarea id="chatinput" v-on:keypress.enter.exact.prevent="sendchat" class="w3-input w3-margin-bottom" style="max-width:100%" placeholder="message"></textarea>
         </div>
       </div>
       <br>
     </div> <!-- End Right Column -->
+    {% endraw %}
     
   </div> <!-- End Grid -->
   
@@ -100,4 +105,43 @@ function toggle(id) {
   }
 }
 </script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+{% if config['DEBUG'] %}
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+{% else %}
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+{% endif %}
+<script>
+// Setup socket connection
+var socket = io.connect('http://' + document.domain + ':' + location.port);
+socket.on('connect', function() {
+  console.log("Socket connected.")
+});
+var objDiv = document.getElementById("chatbox");
+objDiv.scrollTop = objDiv.scrollHeight;
+// Setup Vue dynamic components
+var app = new Vue({
+  el: '#app',
+  data: {
+    messages: []
+  },
+  // Event handlers
+  methods: {
+    sendchat: function(event) {
+      if (/\S/.test(event.target.value)) {
+        payload = {username: '{{ current_user.username }}',
+                   msg: event.target.value};
+        socket.emit('chat', payload);
+        event.target.value = "";
+      }
+    }
+  }
+});
+// Handle incoming socket messages
+socket.on('chat', function(data) {
+  app.messages.push(data);
+});
+</script>
+
 {% endblock %}

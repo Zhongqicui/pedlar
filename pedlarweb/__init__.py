@@ -23,5 +23,8 @@ db = SQLAlchemy(app)
 from .flask_broker import Broker
 broker = Broker(app)
 
+from flask_socketio import SocketIO
+socketio = SocketIO(app)
+
 # Load view endpoints
 from . import views

@@ -8,7 +8,7 @@ class User(db.Model):
   id = db.Column(db.Integer, primary_key=True, autoincrement=True)
   username = db.Column(db.String(128), unique=True, nullable=False)
   _password = db.Column("password", db.String(128), nullable=False)
-  isadmin = db.Column(db.Boolean(), nullable=False, default=False)
+  is_admin = db.Column(db.Boolean(), nullable=False, default=False)
   orders = db.relationship('Order', cascade='all,delete', backref='user', lazy=True)
   last_login = db.Column(db.DateTime(), nullable=False, default=datetime.datetime.now())
   joined = db.Column(db.DateTime(), nullable=False, default=datetime.datetime.now())

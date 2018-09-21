@@ -3,8 +3,9 @@ import datetime
 
 from flask import render_template, redirect, url_for, request, jsonify
 from flask_login import login_user, login_required, current_user, logout_user
+from flask_socketio import send, emit
 
-from . import app, db, broker
+from . import app, db, broker, socketio
 from .forms import UserPasswordForm
 from .models import User, Order
 
@@ -36,6 +37,11 @@ def login():
 def index():
   """Index page."""
   return render_template('index.html')
+
+@socketio.on('chat')
+def handle_chat(json):
+  """Handle incoming chat messages."""
+  emit('chat', json, broadcast=True)
 
 @app.route('/trade', methods=['POST'])
 @login_required
