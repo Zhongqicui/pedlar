@@ -25,7 +25,6 @@ class BasicAgent(Agent):
 
   def on_tick(self, bid, ask):
     """On tick handler."""
-    print("TICK:", bid, ask)
     self.past_ticks.append(bid)
     # Fill the buffer
     if len(self.past_ticks) != self.histsize:
@@ -46,11 +45,11 @@ class BasicAgent(Agent):
 
   def on_bar(self, bopen, bhigh, blow, bclose):
     """On bar handler."""
-    print("BAR:", bopen, bhigh, blow, bclose)
+    pass
 
 if __name__ == "__main__":
   import logging
-  logging.basicConfig(level=logging.INFO)
+  logging.basicConfig(level=logging.WARN)
   # Requests dumps a lot of logs, we will reduce its verbosity
   logging.getLogger('requests').setLevel(logging.ERROR)
   parser = argparse.ArgumentParser(add_help=False)

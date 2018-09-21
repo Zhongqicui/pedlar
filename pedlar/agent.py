@@ -27,21 +27,26 @@ class Agent:
   polltimeout = 2000 # milliseconds
   csrf_re = re.compile('name="csrf_token" type="hidden" value="(.+)"')
 
-  def __init__(self, username="nobody", password="",
+  def __init__(self, backtest=None, username="nobody", password="",
                ticker="tcp://localhost:7000",
                endpoint="http://localhost:5000"):
-    self.username = username
-    self.password = password
-    self.endpoint = endpoint
-    self.session = None
-    self.ticker = ticker
-    self.poller = None
-    self.orders = dict()
+    self.backtest = backtest # backtesting file in any
+    self._last_tick = (0.0, 0.0) # last tick price for backtesting
+    self._last_order_id = 0 # auto increment id for backtesting
+    self.username = username # pedlarweb username
+    self.password = password # pedlarweb password
+    self.endpoint = endpoint # pedlarweb endpoint
+    self._session = None # pedlarweb requests Session
+    self.ticker = ticker # Ticker url
+    self._poller = None # Ticker socket polling object
+    self.orders = dict() # Orders indexed using order id
+    self.balance = 0.0 # Local session balance
 
   @classmethod
   def from_args(cls, parents=None):
     """Create agent instance from command line arguments."""
     parser = argparse.ArgumentParser(description="Pedlar trading agent.", parents=parents or list())
+    parser.add_argument("-b", "--backtest", help="Backtest agaisnt given file.")
     parser.add_argument("-u", "--username", default="nobody", help="Pedlar Web username.")
     parser.add_argument("-p", "--password", default="", help="Pedlar Web password.")
     parser.add_argument("-t", "--ticker", default="tcp://localhost:7000", help="Ticker endpoint.")
@@ -54,9 +59,9 @@ class Agent:
     # We will adapt to the existing web login rather than
     # creating a new api endpoint for agent requests
     logger.info("Attempting to login to Pedlar web.")
-    session = requests.Session()
+    _session = requests.Session()
     try:
-      r = session.get(self.endpoint+"/login") # CSRF protected
+      r = _session.get(self.endpoint+"/login") # CSRF protected
       r.raise_for_status()
     except:
       logger.critical("Failed to connect to Pedlar web.")
@@ -67,11 +72,11 @@ class Agent:
       raise Exception("Could not find CSRF token in auth.")
     payload = {'username': self.username, 'password': self.password,
                'csrf_token': csrf_token}
-    r = session.post(self.endpoint+"/login", data=payload, allow_redirects=False)
+    r = _session.post(self.endpoint+"/login", data=payload, allow_redirects=False)
     r.raise_for_status()
     if not r.is_redirect or not r.headers['Location'].endswith('/'):
       raise Exception("Failed login into Pedlar web.")
-    self.session = session
+    self._session = _session
     logger.info("Pedlar web authentication successful.")
     #-- ticker connection
     socket = context.socket(zmq.SUB)
@@ -83,8 +88,8 @@ class Agent:
     # socket.setsockopt(zmq.SUBSCRIBE, bytes.fromhex('00'))
     logger.info("Connecting to ticker: %s", self.ticker)
     socket.connect(self.ticker)
-    self.poller = zmq.Poller()
-    self.poller.register(socket, zmq.POLLIN)
+    self._poller = zmq.Poller()
+    self._poller.register(socket, zmq.POLLIN)
 
   def disconnect(self):
     """Close server connection gracefully in any."""
@@ -92,7 +97,7 @@ class Agent:
     self.close()
     # Ease the burden on server and logout
     logger.info("Logging out of Pedlar web.")
-    r = self.session.get(self.endpoint+"/logout", allow_redirects=False)
+    r = self._session.get(self.endpoint+"/logout", allow_redirects=False)
     if not r.is_redirect:
       logger.warning("Could not logout from Pedlar web.")
 
@@ -105,7 +110,7 @@ class Agent:
     payload = {'order_id': order_id, 'volume': volume, 'action': action,
                'name': self.name}
     try:
-      r = self.session.post(self.endpoint+'/trade', json=payload)
+      r = self._session.post(self.endpoint+'/trade', json=payload)
       r.raise_for_status()
       resp = r.json()
     except Exception as e:
@@ -126,8 +131,16 @@ class Agent:
     # Request the actual order
     logger.info("Placing a %s order.", otype)
     try:
-      resp = self.talk(volume=volume, action=2 if otype == "buy" else 3)
-      order = Order(id=resp['order_id'], price=resp['price'], type=otype)
+      if self.backtest:
+        # Place order locally
+        bidaskidx = 0 if otype == "buy" else 1
+        order = Order(id=self._last_order_id+1, price=self._last_tick[bidaskidx],
+                      type=otype)
+      else:
+        # Contact pedlarweb
+        resp = self.talk(volume=volume, action=2 if otype == "buy" else 3)
+        order = Order(id=resp['order_id'], price=resp['price'], type=otype)
+      self._last_order_id = order.id
       self.orders[order.id] = order
       self.on_order(order)
     except Exception as e:
@@ -160,14 +173,25 @@ class Agent:
     """
     oids = order_ids if order_ids is not None else list(self.orders.keys())
     for oid in oids:
-      try:
-        resp = self.talk(order_id=oid, action=1)
+      if self.backtest:
+        # Execute order locally
         order = self.orders.pop(oid)
-        logger.info("Closed order %s with profit %s", oid, resp['profit'])
-        self.on_order_close(order, resp['profit'])
-      except Exception as e:
-        logger.error("Failed to close order %s: %s", oid, str(e))
-        return False
+        bidaskidx = 0 if order.type == "sell" else 1
+        profit = (self._last_tick[bidaskidx]-order.price)*1000
+        logger.info("Closed order %s with profit %s", oid, profit)
+        self.balance += profit
+        self.on_order_close(order, profit)
+      else:
+        # Contact pedlarweb
+        try:
+          resp = self.talk(order_id=oid, action=1)
+          order = self.orders.pop(oid)
+          logger.info("Closed order %s with profit %s", oid, resp['profit'])
+          self.balance += resp['profit']
+          self.on_order_close(order, resp['profit'])
+        except Exception as e:
+          logger.error("Failed to close order %s: %s", oid, str(e))
+          return False
     return True
 
   def on_tick(self, bid, ask):
@@ -186,16 +210,16 @@ class Agent:
     """
     pass
 
-  def run(self):
+  def remote_run(self):
     """Start main loop and receive updates."""
     # Check connection
-    if not self.session:
+    if not self._session:
       self.connect()
     # We'll trade forever until interrupted
     logger.info("Starting main trading loop...")
     try:
       while True:
-        socks = self.poller.poll(self.polltimeout)
+        socks = self._poller.poll(self.polltimeout)
         if not socks:
           continue
         raw = socks[0][0].recv()
@@ -211,3 +235,30 @@ class Agent:
     finally:
       logger.info("Stopping agent...")
       self.disconnect()
+
+  def local_run(self):
+    """Run agaisnt local backtesting file."""
+    import csv
+    with open(self.backtest, newline='', encoding='utf-16') as csvfile:
+      reader = csv.reader(csvfile)
+      try:
+        for row in reader:
+          data = [float(x) for x in row[1:]]
+          if row[0] == 'tick':
+            self._last_tick = tuple(data)
+            self.on_tick(*data)
+          elif row[0] == 'bar':
+            self.on_bar(*data)
+      except KeyboardInterrupt:
+        pass # Nothing to do
+      finally:
+        print("--------------")
+        print("Final session balance:", self.balance)
+        print("--------------")
+
+  def run(self):
+    """Run agent."""
+    if self.backtest:
+      self.local_run()
+    else:
+      self.remote_run()
