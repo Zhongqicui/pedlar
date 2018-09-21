@@ -9,11 +9,13 @@
 //--- includes
 #include <libzmq.mqh>
 //--- input parameters
+input bool tofile=false;
 input string endpoint="tcp://*:7000";
 //--- global variables
 long ctx=NULL;
 long socket=NULL;
 datetime lastbar_date=0;
+int filehandle=NULL;
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
 //+------------------------------------------------------------------+
@@ -25,6 +27,19 @@ int OnInit()
      {
       Print("Cannot run server in optimisation mode...");
       return(INIT_FAILED);
+     }
+// Check if we are backtesting, we will write to file instead
+   if(tofile)
+     {
+      string filename=StringFormat("backtest_%s.csv",Symbol());
+      Print("Saving ticks to file: ",filename);
+      filehandle=FileOpen(filename,FILE_WRITE|FILE_CSV,',');
+      if(filehandle==INVALID_HANDLE)
+        {
+         Print("Could not open file.");
+         return(INIT_FAILED);
+        }
+      return(INIT_SUCCEEDED);
      }
 // Check if DLL is allowed, otherwise we're doomed.
    if(!TerminalInfoInteger(TERMINAL_DLLS_ALLOWED))
@@ -74,6 +89,12 @@ int OnInit()
 void OnDeinit(const int reason)
   {
 //---
+// Check writing to file option and close file
+   if(tofile && filehandle!=NULL)
+     {
+      FileClose(filehandle);
+      return;
+     }
 // Clean up socket and context
    if(zmq_close(socket))
      {
@@ -83,7 +104,7 @@ void OnDeinit(const int reason)
      {
       Print("Failed to terminate context: ",zmq_errno());
      }
-   Print("Expert deinitialised.");
+   Print(MQLInfoString(MQL_PROGRAM_NAME)," deinitialised.");
   }
 //+------------------------------------------------------------------+
 //| Expert tick function                                             |
@@ -95,12 +116,17 @@ void OnTick()
    MqlTick last_tick;
    if(SymbolInfoTick(Symbol(),last_tick))
      {
-      tickbuf buf;
-      buf.topic=0; // Tick data is topic 0
-      buf.bid = last_tick.bid;
-      buf.ask = last_tick.ask;
-      int sent=zmq_send(socket,buf,sizeof(buf),NULL);
-      if(sent!=sizeof(buf)) Print("Tick buffer send size did not match.");
+      if(tofile)
+         FileWrite(filehandle,"tick",last_tick.bid,last_tick.ask);
+      else
+        {
+         tickbuf buf;
+         buf.topic=0; // Tick data is topic 0
+         buf.bid = last_tick.bid;
+         buf.ask = last_tick.ask;
+         int sent=zmq_send(socket,buf,sizeof(buf),NULL);
+         if(sent!=sizeof(buf)) Print("Tick buffer send size did not match.");
+        }
      }
    else Print("SymbolInfoTick() failed, error = ",GetLastError());
 
@@ -115,9 +141,14 @@ void OnTick()
       buf.high=iHigh(Symbol(), Period(), 1);
       buf.low=iLow(Symbol(),Period(),1);
       buf.close=iClose(Symbol(),Period(),1);
-      int sent=zmq_send(socket, buf, sizeof(buf), NULL);
-      if(sent!=sizeof(buf)) Print("Bar buffer send size did not match.");
-      //Print("Bar:",buf.open,buf.high,buf.low,buf.close);
+      if(tofile)
+         FileWrite(filehandle,"bar",buf.open,buf.high,buf.low,buf.close);
+      else
+        {
+         int sent=zmq_send(socket, buf, sizeof(buf), NULL);
+         if(sent!=sizeof(buf)) Print("Bar buffer send size did not match.");
+         //Print("Bar:",buf.open,buf.high,buf.low,buf.close);
+        }
      }
   }
 //+------------------------------------------------------------------+
