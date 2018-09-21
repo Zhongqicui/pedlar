@@ -82,17 +82,18 @@ class Broker:
     if not self.validate(request):
       abort(400)
     # Make the request to the broker
+    resp = {'retcode': -1} # Assume failure
     try:
       resp = self.talk(**request)
     except IOError:
-      current_app.logger.warn("Broker response timed out.")
-      abort(504) # Gateway Timeout
+      current_app.logger.error("Broker response timed out.")
+      # abort(504) # Gateway Timeout
     # Check response conditions
     if resp['retcode'] != 0:
-      current_app.logger.warn("Broker returned a non-zero return code.")
+      current_app.logger.error("Broker returned a non-zero return code.")
       abort(500)
     if request['action'] in (2, 3) and resp['order_id'] == 0:
       # We asked for a trade but did not get an id
-      current_app.logger.warn("Broker did not place order.")
+      current_app.logger.error("Broker did not place order.")
       abort(500)
     return resp
