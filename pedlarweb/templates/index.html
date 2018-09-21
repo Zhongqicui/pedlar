@@ -1,142 +1,66 @@
-{% extends "base.html" %}
-{% block body %}
-<!-- Navbar -->
-<div class="w3-top">
- <div class="w3-bar w3-theme-d2 w3-left-align w3-large">
-  <a href="/" class="w3-bar-item w3-button w3-padding-large w3-theme-d4"><i class="material-icons">home</i>Pedlar</a>
-  <a href="https://github.com/nuric/pedlar" class="w3-bar-item w3-button w3-right w3-padding-large w3-hover-white" target="_blank" title="source"><i class="material-icons">code</i></a>
- </div>
-</div>
-
-<!-- Page Container -->
-<div class="w3-container w3-content" style="max-width:1400px;margin-top:80px">    
-  <!-- The Grid -->
-  <div class="w3-row">
-    <!-- Left Column -->
-    <div class="w3-col m2">
-      <!-- Time -->
-      <div class="w3-card w3-theme-d5">
-        <div class="w3-container">
-          <p id="current_time">Clock</p>
-        </div>
-      </div>
-      <br>
-      <!-- Profile -->
+{% extends "main_base.html" %}
+{% block columns %}
+<div id="app"> <!-- Vue Wrapper for dynamic content -->
+  {% raw %}
+  <!-- Middle Column -->
+  <div class="w3-col m7">
+    <div class="w3-row-padding">
       <div class="w3-card w3-white">
-        <div class="w3-container">
-         <h4 class="w3-center">{{ current_user.username }}</h4>
-         <a href="/logout" class="w3-button w3-theme w3-block w3-round">Logout</a>
-         <p><i class="material-icons">account_balance_wallet</i> Balance: {{ current_user.balance }}</p>
-         <p><i class="material-icons">info</i> Last Login: {{ current_user.joined.strftime('%c') }}</p>
-         <p><i class="material-icons">account_box</i> Joined: {{ current_user.joined.strftime('%c') }}</p>
-        </div>
+        <table class="w3-table w3-striped">
+          <tr class="w3-theme-l3">
+            <th>Name</th>
+            <th>Balance</th>
+          </tr>
+          <tr v-for="l in leaders">
+            <td>{{ l.username }}</td>
+            <td>{{ l.balance }}</td>
+          </tr>
+        </table>
       </div>
       <br>
-      <!-- Accordion -->
-      <div class="w3-card">
-        <div class="w3-white">
-          <button onclick="toggle('accord1')" class="w3-button w3-block w3-theme-l1 w3-left-align"><i class="material-icons">settings</i> Account</button>
-          <div id="accord1" class="w3-hide w3-container">
-            <a href="/account_reset" class="w3-button w3-section w3-orange w3-block w3-round">Reset Account</a>
-            <a href="/account_delete" class="w3-button w3-section w3-red w3-block w3-round">Delete Account</a>
-          </div>
-          <button onclick="toggle('accord2')" class="w3-button w3-block w3-theme-l1 w3-left-align"><i class="material-icons">contact_support</i> Issues</button>
-          <div id="accord2" class="w3-hide w3-container">
-            <p>For any issues please contact the deployment administrator.</p>
-          </div>
-        </div>      
+      <div class="w3-card w3-white">
+        <table class="w3-table w3-striped">
+          <tr class="w3-theme-d3">
+            <th>Agent</th>
+            <th>Type</th>
+            <th>Price Open</th>
+            <th>Price Close</th>
+            <th>Profit</th>
+            <th>Created</th>
+            <th>Closed</th>
+          </tr>
+          <tr v-for="o in orders">
+            <td>{{ o.agent }}</td>
+            <td>{{ o.type }}</td>
+            <td>{{ o.price_open }}</td>
+            <td>{{ o.price_close }}</td>
+            <td>{{ o.profit }}</td>
+            <td>{{ o.created.toLocaleString() }}</td>
+            <td>{{ o.closed.toLocaleString() }}</td>
+          </tr>
+        </table>
       </div>
       <br>
-    </div> <!-- End Left Column -->
-    <div id="app"> <!-- Vue Wrapper for dynamic content -->
-      {% raw %}
-      <!-- Middle Column -->
-      <div class="w3-col m7">
-        <div class="w3-row-padding">
-          <div class="w3-card w3-white">
-            <table class="w3-table w3-striped">
-              <tr class="w3-theme-l3">
-                <th>Name</th>
-                <th>Balance</th>
-              </tr>
-              <tr v-for="l in leaders">
-                <td>{{ l.username }}</td>
-                <td>{{ l.balance }}</td>
-              </tr>
-            </table>
-          </div>
-          <br>
-          <div class="w3-card w3-white">
-            <table class="w3-table w3-striped">
-              <tr class="w3-theme-d3">
-                <th>Agent</th>
-                <th>Type</th>
-                <th>Price Open</th>
-                <th>Price Close</th>
-                <th>Profit</th>
-                <th>Created</th>
-                <th>Closed</th>
-              </tr>
-              <tr v-for="o in orders">
-                <td>{{ o.agent }}</td>
-                <td>{{ o.type }}</td>
-                <td>{{ o.price_open }}</td>
-                <td>{{ o.price_close }}</td>
-                <td>{{ o.profit }}</td>
-                <td>{{ o.created.toLocaleString() }}</td>
-                <td>{{ o.closed.toLocaleString() }}</td>
-              </tr>
-            </table>
-          </div>
-          <br>
+    </div>
+  </div> <!-- End Middle Column -->
+
+  <!-- Right Column -->
+  <div class="w3-col m3">
+    <div class="w3-card w3-white">
+      <div class="w3-container">
+        <div id="chatbox" class="w3-panel w3-border" style="min-height:60vh;max-height:60vh;overflow-y:scroll">
+          <p v-for="m in messages" style="white-space:pre-wrap"><b>{{ m.username }}:</b> {{ m.msg }}</p>
         </div>
-      </div> <!-- End Middle Column -->
+        <textarea id="chatinput" v-on:keypress.enter.exact.prevent="sendchat" class="w3-input w3-margin-bottom" style="max-width:100%" placeholder="message"></textarea>
+      </div>
+    </div>
+    <br>
+  </div> <!-- End Right Column -->
+  {% endraw %}
+</div> <!-- End Vue Wrapper -->
+{% endblock %}
 
-      <!-- Right Column -->
-      <div class="w3-col m3">
-        <div class="w3-card w3-white">
-          <div class="w3-container">
-            <div id="chatbox" class="w3-panel w3-border" style="min-height:60vh;max-height:60vh;overflow-y:scroll">
-              <p v-for="m in messages" style="white-space:pre-wrap"><b>{{ m.username }}:</b> {{ m.msg }}</p>
-            </div>
-            <textarea id="chatinput" v-on:keypress.enter.exact.prevent="sendchat" class="w3-input w3-margin-bottom" style="max-width:100%" placeholder="message"></textarea>
-          </div>
-        </div>
-        <br>
-      </div> <!-- End Right Column -->
-    </div> <!-- End Vue Wrapper -->
-    {% endraw %}
-    
-  </div> <!-- End Grid -->
-  
-</div> <!-- End Page Container -->
-<br>
-
-<!-- Footer -->
-<footer class="w3-container w3-theme-d3">
-  <h5>Footer</h5>
-</footer>
-<script>
-// Current Time
-function update_time() {
-  el = document.getElementById('current_time');
-  el.innerHTML = new Date().toLocaleString();
-}
-setInterval(update_time, 1000);
-// Accordion
-function toggle(id) {
-  var x = document.getElementById(id);
-  if (x.className.indexOf("w3-show") == -1) {
-    x.className += " w3-show";
-    x.previousElementSibling.className += " w3-theme-d1";
-  } else { 
-    x.className = x.className.replace("w3-show", "");
-    x.previousElementSibling.className = 
-    x.previousElementSibling.className.replace(" w3-theme-d1", "");
-  }
-}
-</script>
-
+{% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
 {% if config['DEBUG'] %}
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
@@ -206,5 +130,4 @@ socket.on('order', function(order) {
   }
 });
 </script>
-
 {% endblock %}

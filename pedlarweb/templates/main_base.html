@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block body %}
+<!-- Navbar -->
+<div class="w3-top">
+ <div class="w3-bar w3-theme-d2 w3-left-align w3-large">
+  <a href="/" class="w3-bar-item w3-button w3-padding-large w3-theme-d4"><i class="material-icons">home</i>Pedlar</a>
+  <a href="https://github.com/nuric/pedlar" class="w3-bar-item w3-button w3-right w3-padding-large w3-hover-white" target="_blank" title="source"><i class="material-icons">code</i></a>
+ </div>
+</div>
+
+<!-- Page Container -->
+<div class="w3-container w3-content" style="max-width:1400px;margin-top:80px">    
+  <!-- The Grid -->
+  <div class="w3-row">
+    <!-- Left Column -->
+    <div class="w3-col m2">
+      <!-- Time -->
+      <div class="w3-card w3-theme-d5">
+        <div class="w3-container">
+          <p id="current_time">Clock</p>
+        </div>
+      </div>
+      <br>
+      <!-- Profile -->
+      <div class="w3-card w3-white">
+        <div class="w3-container">
+         <h4 class="w3-center">{{ current_user.username }}</h4>
+         <a href="/logout" class="w3-button w3-theme w3-block w3-round">Logout</a>
+         <p><i class="material-icons">account_balance_wallet</i> Balance: {{ current_user.balance }}</p>
+         <p><i class="material-icons">info</i> Last Login: {{ current_user.joined.strftime('%c') }}</p>
+         <p><i class="material-icons">account_box</i> Joined: {{ current_user.joined.strftime('%c') }}</p>
+        </div>
+      </div>
+      <br>
+      <!-- Accordion -->
+      <div class="w3-card">
+        <div class="w3-white">
+          <button onclick="toggle('accord1')" class="w3-button w3-block w3-theme-l1 w3-left-align"><i class="material-icons">settings</i> Account</button>
+          <div id="accord1" class="w3-hide w3-container">
+            <a href="/account_reset" class="w3-button w3-section w3-orange w3-block w3-round">Reset Account</a>
+            <a href="/account_delete" class="w3-button w3-section w3-red w3-block w3-round">Delete Account</a>
+          </div>
+          <button onclick="toggle('accord2')" class="w3-button w3-block w3-theme-l1 w3-left-align"><i class="material-icons">contact_support</i> Issues</button>
+          <div id="accord2" class="w3-hide w3-container">
+            <p>For any issues please contact the deployment administrator.</p>
+          </div>
+        </div>      
+      </div>
+      <br>
+    </div> <!-- End Left Column -->
+    {% block columns %}
+    {% endblock %}
+    
+  </div> <!-- End Grid -->
+  
+</div> <!-- End Page Container -->
+<br>
+
+<!-- Footer -->
+<footer class="w3-container w3-theme-d3">
+  <h5>Footer</h5>
+</footer>
+<script>
+// Current Time
+function update_time() {
+  el = document.getElementById('current_time');
+  el.innerHTML = new Date().toLocaleString();
+}
+setInterval(update_time, 1000);
+// Accordion
+function toggle(id) {
+  var x = document.getElementById(id);
+  if (x.className.indexOf("w3-show") == -1) {
+    x.className += " w3-show";
+    x.previousElementSibling.className += " w3-theme-d1";
+  } else { 
+    x.className = x.className.replace("w3-show", "");
+    x.previousElementSibling.className = 
+    x.previousElementSibling.className.replace(" w3-theme-d1", "");
+  }
+}
+</script>
+
+{% block scripts %}
+{% endblock %}
+
+{% endblock %}
