@@ -8,9 +8,7 @@ class InteractiveAgent(Agent):
   # Override run and ask for user input instead
   def run(self):
     """Execute user commands."""
-    # Check connection
-    if not self.session:
-      self.connect()
+    self.connect()
     try:
       while True:
         # Get user input and perform action

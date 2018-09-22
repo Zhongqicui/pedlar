@@ -12,7 +12,7 @@
 #include <Trade\Trade.mqh>
 //--- input parameters
 input string   endpoint="tcp://*:7100";
-input long polltimeout=2000; // miliseconds
+input long polltimeout=2000;
 //+------------------------------------------------------------------+
 //| Script program start function                                    |
 //+------------------------------------------------------------------+
