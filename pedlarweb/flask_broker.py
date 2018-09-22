@@ -91,9 +91,9 @@ class Broker:
     # Check response conditions
     if resp['retcode'] != 0:
       current_app.logger.error("Broker returned a non-zero return code.")
-      abort(500)
+      abort(503)
     if request['action'] in (2, 3) and resp['order_id'] == 0:
       # We asked for a trade but did not get an id
       current_app.logger.error("Broker did not place order.")
-      abort(500)
+      abort(503)
     return resp
