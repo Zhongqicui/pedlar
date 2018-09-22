@@ -59,6 +59,23 @@ Key things to keep in mind:
  - Agents try to close orders when they are quit, if hard stopped or an error occurs an open orphan order might remain. In this case, one option would be manually invoke `self.close` with the stale order id or simply reset the account.
  - The ticker connection receives from ZeroMQ whereas the trade requests are made via HTTP. There might some ticks dropped if the trade request takes too long.
 
+### Basic Backtesting
+The agents can backtest agaisnt a CSV file of the following format:
+
+```
+tick,1.29127,1.292
+tick,1.29139,1.29212
+tick,1.29145,1.29218
+bar,1.29584,1.29606,1.29547,1.29554
+tick,1.29138,1.29189
+tick,1.29135,1.29186
+tick,1.29134,1.29185
+tick,1.29136,1.29187
+tick,1.29133,1.29184
+```
+
+which can be used with an agent `python3 myagent.py -b ticks.csv`. Essentially each line will invoke corresponding `on_tick` or `on_bar` function. **The actual profit and trade results are computed offline based on absolute price differences.** This means the agent will run completely offline and the actual results are only useful to get an idea about the performance or train a neural network. Any broker commissions, price requotes etc are not factored.
+
 ## Hosting
 Pedlar involves 4 components that talk to each other to create a platform for agents to trade:
 
