@@ -1,8 +1,8 @@
-# pedlar
-Pedlar is an algorithmic trading platform for Python designed for trading events and sessions such as Algothons. It includes a live web interface with multiple accounts with account sharing and live chat, an HTTP API with example Python trading agents and a [ZeroMQ](http://zeromq.org/) based broker connection to [MetaTrader5](https://www.metatrader5.com/en).
+# :chart_with_upwards_trend: pedlar
+Pedlar is an algorithmic trading platform for Python designed for trading events, competitions and sessions such as Algothons. It includes a live web interface with multiple accounts with account sharing and live chat, an HTTP API with example Python trading agents and a [ZeroMQ](http://zeromq.org/) based broker connection to [MetaTrader5](https://www.metatrader5.com/en).
 
 ## Getting Started
-If there already a server and broker running, the client API under `pedlar` can be used. If not, follow instructions on how to get them in the [Development](#development) section. The client or *agent* API resolves around connecting to the *ticker* server (where agents receive price updates) and the *web* server, in this case handles the broker connection. The ticker is separate to reduce overhead and latencies between making trades and just receiving price updates.
+If there is already a ticker server and web server running, the client API under `pedlar` can be used. If not, follow instructions on how to get them in the [Hosting](#hosting) section. The client or *agent* API resolves around connecting to the *ticker* server (where agents receive price updates) and the *web* server, in this case handles the broker connection. The ticker is separate to reduce overhead and latencies between making trades and just receiving price updates.
 
 ### Installation
 The client API is can be installed using:
@@ -103,17 +103,17 @@ If the in-memory default database is used, tables will be automatically created 
 export FLASK_APP=pedlarweb flask run
 ```
 
-Due to [Flask-SocketIO](https://flask-socketio.readthedocs.io/en/latest/) the `eventlet` server would be run. For development the `FLASK_ENV=development` environment variable needs to be set. **For convinience, a new is created if none with the username exist from the login page.** This choice is done get people on-board as quickly as possible.
+Due to [Flask-SocketIO](https://flask-socketio.readthedocs.io/en/latest/) the `eventlet` server would be run. For development the `FLASK_ENV=development` environment variable needs to be set. **For convinience, a new user is created if none with the username exist from the login page.** This choice is done to get people on-board as easy as possible without heavy registration and email confirmation schemes.
 
 ## FAQ
 
  - **Why ticker is separated from the web server?** This design choice is done to reduce overhead and latency in receiving price updates for agents. As a result agents need to connect to both the ticker and the web server to function unless backtesting.
- - **Why not use ZeroMQ for trade requests instead of HTTP?** HTTP APIs provide a more approchable and unified way of providing a service. HTTP does have more overhead but it makes it easier for other non-pedlar clients that talk to `pedlarweb` to be built as well. Finally, it has an authentication mechanism that is enforced for every request.
+ - **Why not use ZeroMQ for trade requests instead of HTTP?** HTTP APIs provide a more approachable and unified way of providing a service. HTTP does have more overhead but it makes it easier for other non-pedlar clients that talk to `pedlarweb` to be built as well. Finally, it has an authentication mechanism that is enforced for every request.
 
 ## Limitations & To-Dos
 
- - Currently the API supports trading only on a single instrument mainly because the web server can talk to a single broker and a single broker can only be attached to single chart. The MT5 broker is fixed to the current chart `Symbol()` but there is space for passing the symbol, instrument from agent -> server -> broker. For the target audience of live sessions and competitions, a single instrument seems enough.
- - Although polling is employed for ZeroMQ sockets, they are still blocking in nature to avoid data loss. In that case, an agent can look like it has frozen against Ctrl+C. This case also occurs for MT5 ticker and broker scripts. The timeout on the polls can be adjust or a little patience helps.
+ - Currently the API *supports trading only on a single instrument* mainly because the web server can talk to a single broker and a single broker can only be attached to single chart. The MT5 broker is fixed to the current chart `Symbol()` but there is space for passing the symbol, instrument from agent -> server -> broker. For the target audience of live sessions and competitions, a single instrument seems enough.
+ - Although polling is employed for ZeroMQ sockets, they are still *blocking* in nature to avoid data loss. In that case, an agent can look like it has frozen against Ctrl+C. This case also occurs for MT5 ticker and broker scripts. The timeout on the polls can be adjust or a little patience helps.
 
 ## Built With
 
