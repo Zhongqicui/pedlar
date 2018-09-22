@@ -19,7 +19,7 @@ class Broker:
   def init_app(self, app):
     """Initialise extension."""
     app.config.setdefault('BROKER_URL', "tcp://localhost:7100")
-    app.config.setdefault('BROKER_POLLTIMEOUT', 1000) # milliseconds
+    app.config.setdefault('BROKER_POLLTIMEOUT', 4000) # milliseconds
     app.teardown_appcontext(self.teardown)
 
   @staticmethod

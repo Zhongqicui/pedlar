@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 logger.info("libzmq: %s", zmq.zmq_version())
 logger.info("pyzmq: %s", zmq.pyzmq_version())
 
-# pylint: disable=broad-except
+# pylint: disable=broad-except,too-many-instance-attributes,too-many-arguments
 
 Order = namedtuple('Order', ['id', 'price', 'type'])
 
