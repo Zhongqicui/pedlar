@@ -126,11 +126,13 @@ Due to [Flask-SocketIO](https://flask-socketio.readthedocs.io/en/latest/) the `e
 
  - **Why ticker is separated from the web server?** This design choice is done to reduce overhead and latency in receiving price updates for agents. As a result agents need to connect to both the ticker and the web server to function unless backtesting.
  - **Why not use ZeroMQ for trade requests instead of HTTP?** HTTP APIs provide a more approachable and unified way of providing a service. HTTP does have more overhead but it makes it easier for other non-pedlar clients that talk to `pedlarweb` to be built as well. Finally, it has an authentication mechanism that is enforced for every request.
+ - **Why is the source code 2 space indented?** The answer is a combination of personal style and to stop direct copy-paste from other resources. The code is linted using [PyLint](https://www.pylint.org/) although there are cases it is disabled on purpose.
 
 ## Limitations & To-Dos
 
  - Currently the API *supports trading only on a single instrument* mainly because the web server can talk to a single broker and a single broker can only be attached to single chart. The MT5 broker is fixed to the current chart `Symbol()` but there is space for passing the symbol, instrument from agent -> server -> broker. For the target audience of live sessions and competitions, a single instrument seems enough.
  - Although polling is employed for ZeroMQ sockets, they are still *blocking* in nature to avoid data loss. In that case, an agent can look like it has frozen against Ctrl+C. This case also occurs for MT5 ticker and broker scripts. The timeout on the polls can be adjust or a little patience helps.
+ - There is a mixture of line endings due MT5 running on Windows and development is somewhat split between Windows and Linux environments. Hopefully, we live in a day and age this is not a problem anymore.
 
 ## Built With
 
