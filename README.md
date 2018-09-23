@@ -1,4 +1,4 @@
-# :chart_with_upwards_trend: pedlar
+# pedlar
 Pedlar is an algorithmic trading platform for Python designed for trading events, competitions and sessions such as Algothons. It includes a live web interface with multiple accounts with account sharing and live chat, an HTTP API with example Python trading agents and a [ZeroMQ](http://zeromq.org/) based broker connection to [MetaTrader5](https://www.metatrader5.com/en).
 
 ## Getting Started
@@ -15,7 +15,7 @@ pip3 install --no-cache-dir -U pedlar
 There are some helpful examples in the `pedlar` folder. Here is a overview of the client API:
 
 ```python
-from pedlar import Agent
+from pedlar.agent import Agent
 
 class MyAgent(Agent):
   """A trading agent."""
