@@ -19,6 +19,10 @@
       </div>
       <br>
       <div class="w3-card w3-white">
+        <canvas id="bal_chart"></canvas>
+      </div>
+      <br>
+      <div class="w3-card w3-white">
         <table class="w3-table w3-striped">
           <tr class="w3-theme-d3">
             <th>Agent</th>
@@ -49,7 +53,7 @@
     <div class="w3-card w3-white">
       <div class="w3-container">
         <div id="chatbox" class="w3-panel w3-border" style="min-height:60vh;max-height:60vh;overflow-y:scroll">
-          <p v-for="m in messages" style="white-space:pre-wrap"><b>{{ m.username }}:</b> {{ m.msg }}</p>
+          <p v-for="m in messages" style="white-space:pre-wrap"><b v-bind:class="{ 'w3-text-theme': current_username == m.username }">{{ m.username }}:</b> {{ m.msg }}</p>
         </div>
         <textarea id="chatinput" v-on:keypress.enter.exact.prevent="sendchat" class="w3-input w3-margin-bottom" style="max-width:100%" placeholder="message"></textarea>
       </div>
@@ -61,6 +65,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
 {% if config['DEBUG'] %}
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
@@ -77,6 +82,7 @@ socket.on('connect', function() {
 var app = new Vue({
   el: '#app',
   data: {
+    current_username: "{{ current_user.username }}",
     leaders: [],
     orders: [], // Vue is unhappy with dict changes so use array
     messages: []
@@ -98,6 +104,22 @@ var app = new Vue({
     }
   }
 });
+// Setup charts
+var current_balance = {{ current_user.balance }};
+var ctx = document.getElementById('bal_chart').getContext('2d');
+var bal_chart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    datasets: [{
+      label: "Balance",
+      backgroundColor: 'rgba(0, 62, 116, 0.5)',
+      borderColor: 'rgb(0, 62, 116)',
+      data: [],
+    }]
+  },
+  options: {}
+});
+
 // Handle incoming socket messages
 socket.on('chat', app.addmessage);
 socket.on('leaderboard', function(leaders) {
@@ -114,9 +136,20 @@ function cleanOrder(order) {
 }
 
 socket.on('orders', function(orders) {
+  // Clean orders and setup balance chart
   for(i in orders) {
     cleanOrder(orders[i]);
+    // We need the initial balance before profits
+    current_balance -= orders[i].profit; // Undo any profits
   }
+  // Reconstruct history of balance
+  bal_chart.data.datasets[0].data.push(current_balance);
+  for(var i = orders.length-1; i >= 0; i--) {
+    current_balance += orders[i].profit;
+    bal_chart.data.datasets[0].data.push(current_balance);
+  }
+  bal_chart.data.labels = Array.from({length: orders.length+1}, (_, k) => k);
+  bal_chart.update();
   app.orders = orders;
 });
 socket.on('order', function(order) {
@@ -127,6 +160,10 @@ socket.on('order', function(order) {
     app.orders.unshift(order);
   } else {
     Vue.set(app.orders, idx, order);
+    current_balance += order.profit;
+    bal_chart.data.datasets[0].data.push(current_balance);
+    bal_chart.data.labels.push(bal_chart.data.labels.length);
+    bal_chart.update()
   }
 });
 </script>

@@ -1,12 +1,13 @@
 """Distribution script for Pedlar client API."""
 import setuptools
+from config import VERSION
 
 with open("README.md", 'r') as fh:
   long_description = fh.read()
 
 setuptools.setup(
   name="pedlar",
-  version="0.0.2",
+  version=VERSION,
   author="nuric",
   author_email="nuric@users.noreply.github.com",
   description="Algorithmic Trading Platform for Python",

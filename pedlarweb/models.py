@@ -11,8 +11,8 @@ class User(db.Model):
   is_admin = db.Column(db.Boolean(), nullable=False, default=False)
   orders = db.relationship('Order', cascade='all,delete', backref='user', lazy=True)
   balance = db.Column(db.Float(), nullable=False, default=0)
-  last_login = db.Column(db.DateTime(), nullable=False, default=datetime.datetime.now())
-  joined = db.Column(db.DateTime(), nullable=False, default=datetime.datetime.now())
+  last_login = db.Column(db.DateTime(), nullable=False, default=datetime.datetime.now)
+  joined = db.Column(db.DateTime(), nullable=False, default=datetime.datetime.now)
 
   @property
   def password(self):
@@ -65,7 +65,7 @@ class Order(db.Model):
   price_close = db.Column(db.Float())
   profit = db.Column(db.Float())
   closed = db.Column(db.DateTime())
-  created = db.Column(db.DateTime(), nullable=False, default=datetime.datetime.now())
+  created = db.Column(db.DateTime(), nullable=False, default=datetime.datetime.now)
 
   @property
   def is_open(self):
