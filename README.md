@@ -141,3 +141,6 @@ Due to [Flask-SocketIO](https://flask-socketio.readthedocs.io/en/latest/) the `e
  - [Flask](http://flask.pocoo.org/) - `pedlarweb` web framework
  - [ZeroMQ](http://zeromq.org/) - `ticker` and `broker` messaging framework
  - [MetaTrader5](https://www.metatrader5.com/en) - as the default trading platform
+ - [SocketIO](https://socket.io/) - server client messaging for dynamic updates
+ - [Vue.JS](https://vuejs.org/) - dynamic front-end rendering
+ - [W3.CSS](https://www.w3schools.com/w3css/) - front-end CSS library
