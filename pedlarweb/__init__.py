@@ -26,5 +26,8 @@ socketio = SocketIO(app)
 from .flask_broker import Broker
 broker = Broker(app)
 
+from .flask_ticker import Ticker
+ticker = Ticker(app, socketio)
+
 # Load view endpoints
 from . import views

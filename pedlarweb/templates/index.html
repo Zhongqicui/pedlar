@@ -6,7 +6,7 @@
   <div class="w3-col m7">
     <div class="w3-row-padding">
       <div class="w3-card w3-white">
-        <table class="w3-table w3-striped">
+        <table class="w3-table w3-hoverable w3-striped">
           <tr class="w3-theme-l3">
             <th>Name</th>
             <th>Balance</th>
@@ -19,11 +19,30 @@
       </div>
       <br>
       <div class="w3-card w3-white">
+        <table class="w3-table">
+          <tr class="w3-theme-d3">
+            <th>Ask</th>
+            <th>Bid</th>
+            <th>Swap</th>
+          </tr>
+          <tr>
+            <td>{{ tick.ask }}</td>
+            <td>{{ tick.bid }}</td>
+            <td>{{ Math.round((tick.ask - tick.bid)*1000000)/100 }}</td>
+          </tr>
+        </table>
+      </div>
+      <br>
+      <div class="w3-card w3-white">
+        <canvas id="tick_chart"></canvas>
+      </div>
+      <br>
+      <div class="w3-card w3-white">
         <canvas id="bal_chart"></canvas>
       </div>
       <br>
       <div class="w3-card w3-white">
-        <table class="w3-table w3-striped">
+        <table class="w3-table w3-hoverable w3-striped">
           <tr class="w3-theme-d3">
             <th>Agent</th>
             <th>Type</th>
@@ -83,9 +102,10 @@ var app = new Vue({
   el: '#app',
   data: {
     current_username: "{{ current_user.username }}",
-    leaders: [],
+    leaders: [], // leaderboard leaders
     orders: [], // Vue is unhappy with dict changes so use array
-    messages: []
+    messages: [], // chat messages
+    tick: {'bid': 0.0, 'ask': 0.0} // latest tick data
   },
   // Event handlers
   methods: {
@@ -104,6 +124,7 @@ var app = new Vue({
     }
   }
 });
+
 // Setup charts
 var current_balance = {{ current_user.balance }};
 var ctx = document.getElementById('bal_chart').getContext('2d');
@@ -112,12 +133,28 @@ var bal_chart = new Chart(ctx, {
   data: {
     datasets: [{
       label: "Balance",
-      backgroundColor: 'rgba(0, 62, 116, 0.5)',
+      backgroundColor: 'rgba(0, 62, 116, 0.2)',
       borderColor: 'rgb(0, 62, 116)',
       data: [],
     }]
   },
   options: {}
+});
+
+var ctx = document.getElementById('tick_chart').getContext('2d');
+var tick_chart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    datasets: [
+      {label: "Ask",
+      borderColor: 'rgb(234, 67, 53)',
+      data: []},
+      {label: "Bid",
+      borderColor: 'rgb(66, 133, 244)',
+      data: []}
+    ]
+  },
+  options: {elements: { line: { tension: 0, fill: false }}}
 });
 
 // Handle incoming socket messages
@@ -135,6 +172,7 @@ function cleanOrder(order) {
   order.created = new Date(order.created);
 }
 
+// When new recent order list arrives
 socket.on('orders', function(orders) {
   // Clean orders and setup balance chart
   for(i in orders) {
@@ -152,6 +190,8 @@ socket.on('orders', function(orders) {
   bal_chart.update();
   app.orders = orders;
 });
+
+// When new or order update arrives
 socket.on('order', function(order) {
   cleanOrder(order);
   // Check for updating order
@@ -163,8 +203,24 @@ socket.on('order', function(order) {
     current_balance += order.profit;
     bal_chart.data.datasets[0].data.push(current_balance);
     bal_chart.data.labels.push(bal_chart.data.labels.length);
-    bal_chart.update()
+    bal_chart.update();
   }
+});
+
+// Tick data
+tick_hist_size = {{ config['TICK_HIST_SIZE'] }};
+socket.on('tick', function(tick) {
+  app.tick = tick;
+  // Chart is updated independant of Vue
+  tick_chart.data.datasets[0].data.push(tick.ask);
+  tick_chart.data.datasets[1].data.push(tick.bid);
+  if (tick_chart.data.labels.length < tick_hist_size) {
+    tick_chart.data.labels.push(tick_chart.data.labels.length);
+  } else {
+    tick_chart.data.datasets[0].data.shift();
+    tick_chart.data.datasets[1].data.shift();
+  }
+  tick_chart.update();
 });
 </script>
 {% endblock %}

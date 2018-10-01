@@ -12,7 +12,6 @@ class Broker:
   """Handle ZMQ connection to broker."""
   def __init__(self, app=None):
     self.app = app
-    self.context = zmq
     if app is not None:
       self.init_app(app)
 
