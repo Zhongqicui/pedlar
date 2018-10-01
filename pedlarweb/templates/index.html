@@ -181,6 +181,7 @@ socket.on('orders', function(orders) {
     current_balance -= orders[i].profit; // Undo any profits
   }
   // Reconstruct history of balance
+  bal_chart.data.datasets[0].data = [];
   bal_chart.data.datasets[0].data.push(current_balance);
   for(var i = orders.length-1; i >= 0; i--) {
     current_balance += orders[i].profit;
