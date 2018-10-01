@@ -3,72 +3,76 @@
 <div id="app"> <!-- Vue Wrapper for dynamic content -->
   {% raw %}
   <!-- Middle Column -->
-  <div class="w3-col m7">
+  <div class="w3-col l7 vl8">
     <div class="w3-row-padding">
-      <div class="w3-card w3-white">
-        <table class="w3-table w3-hoverable w3-striped">
-          <tr class="w3-theme-l3">
-            <th>Name</th>
-            <th>Balance</th>
-          </tr>
-          <tr v-for="l in leaders">
-            <td>{{ l.username }}</td>
-            <td>{{ l.balance }}</td>
-          </tr>
-        </table>
-      </div>
-      <br>
-      <div class="w3-card w3-white">
-        <table class="w3-table">
-          <tr class="w3-theme-d3">
-            <th>Ask</th>
-            <th>Bid</th>
-            <th>Swap</th>
-          </tr>
-          <tr>
-            <td>{{ tick.ask }}</td>
-            <td>{{ tick.bid }}</td>
-            <td>{{ Math.round((tick.ask - tick.bid)*1000000)/100 }}</td>
-          </tr>
-        </table>
-      </div>
-      <br>
-      <div class="w3-card w3-white">
-        <canvas id="tick_chart"></canvas>
-      </div>
-      <br>
-      <div class="w3-card w3-white">
-        <canvas id="bal_chart"></canvas>
-      </div>
-      <br>
-      <div class="w3-card w3-white">
-        <table class="w3-table w3-hoverable w3-striped">
-          <tr class="w3-theme-d3">
-            <th>Agent</th>
-            <th>Type</th>
-            <th>Price Open</th>
-            <th>Price Close</th>
-            <th>Profit</th>
-            <th>Created</th>
-            <th>Closed</th>
-          </tr>
-          <tr v-for="o in orders">
-            <td>{{ o.agent }}</td>
-            <td>{{ o.type }}</td>
-            <td>{{ o.price_open }}</td>
-            <td>{{ o.price_close }}</td>
-            <td>{{ o.profit }}</td>
-            <td>{{ o.created.toLocaleString() }}</td>
-            <td>{{ o.closed.toLocaleString() }}</td>
-          </tr>
-        </table>
-      </div>
-      <br>
+      <div class="w3-col vl6">
+        <div class="w3-card w3-white">
+          <table class="w3-table w3-hoverable w3-striped">
+            <tr class="w3-theme-l3">
+              <th>Name</th>
+              <th>Balance</th>
+            </tr>
+            <tr v-for="l in leaders">
+              <td>{{ l.username }}</td>
+              <td>{{ l.balance }}</td>
+            </tr>
+          </table>
+        </div>
+        <br>
+        <div class="w3-card w3-white">
+          <table class="w3-table">
+            <tr class="w3-theme-d3">
+              <th>Bid</th>
+              <th>Ask</th>
+              <th>Spread</th>
+            </tr>
+            <tr>
+              <td>{{ tick.bid }}</td>
+              <td>{{ tick.ask }}</td>
+              <td>{{ Math.round((tick.ask - tick.bid)*100000)/10 }}</td>
+            </tr>
+          </table>
+        </div>
+        <br>
+        <div class="w3-card w3-white">
+          <canvas id="tick_chart"></canvas>
+        </div>
+        <br>
+      </div> <!-- Inter Column -->
+      <div class="w3-col vl6">
+        <div class="w3-card w3-white">
+          <canvas id="bal_chart"></canvas>
+        </div>
+        <br>
+        <div class="w3-card w3-white">
+          <table class="w3-table w3-hoverable w3-striped">
+            <tr class="w3-theme-d3">
+              <th>Agent</th>
+              <th>Type</th>
+              <th>Price Open</th>
+              <th>Price Close</th>
+              <th>Profit</th>
+              <th class="w3-hide-medium w3-hide-small">Created</th>
+              <th class="w3-hide-medium w3-hide-small">Closed</th>
+            </tr>
+            <tr v-for="o in orders">
+              <td>{{ o.agent }}</td>
+              <td>{{ o.type }}</td>
+              <td>{{ o.price_open }}</td>
+              <td>{{ o.price_close }}</td>
+              <td>{{ o.profit }}</td>
+              <td class="w3-hide-medium w3-hide-small">{{ o.created.toLocaleString() }}</td>
+              <td class="w3-hide-medium w3-hide-small">{{ o.closed.toLocaleString() }}</td>
+            </tr>
+          </table>
+        </div>
+        <br>
+      </div> <!-- Inter Column -->
     </div>
   </div> <!-- End Middle Column -->
 
   <!-- Right Column -->
-  <div class="w3-col m3">
+  <div class="w3-col l3 vl2">
     <div class="w3-card w3-white">
       <div class="w3-container">
         <div id="chatbox" class="w3-panel w3-border" style="min-height:60vh;max-height:60vh;overflow-y:scroll">
