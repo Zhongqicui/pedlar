@@ -45,7 +45,9 @@ class Agent:
   @classmethod
   def from_args(cls, parents=None):
     """Create agent instance from command line arguments."""
-    parser = argparse.ArgumentParser(description="Pedlar trading agent.", parents=parents or list())
+    parser = argparse.ArgumentParser(description="Pedlar trading agent.",
+                                     fromfile_prefix_chars='@',
+                                     parents=parents or list())
     parser.add_argument("-b", "--backtest", help="Backtest agaisnt given file.")
     parser.add_argument("-u", "--username", default="nobody", help="Pedlar Web username.")
     parser.add_argument("-p", "--password", default="", help="Pedlar Web password.")

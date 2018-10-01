@@ -27,7 +27,7 @@
          <h4 class="w3-center">{{ current_user.username }}</h4>
          <a href="/logout" class="w3-button w3-theme w3-block w3-round">Logout</a>
          <p><i class="material-icons">account_balance_wallet</i> Balance: {{ current_user.balance }}</p>
-         <p><i class="material-icons">info</i> Last Login: {{ current_user.joined.strftime('%c') }}</p>
+         <p><i class="material-icons">info</i> Last Login: {{ current_user.last_login.strftime('%c') }}</p>
          <p><i class="material-icons">account_box</i> Joined: {{ current_user.joined.strftime('%c') }}</p>
         </div>
       </div>
