@@ -12,6 +12,11 @@
     <p><label>{{ field.label }}</label>{{ field(class_="w3-input") }}</p>
     {% endfor %}
     <p><button class="w3-button w3-section w3-blue w3-ripple">Log in</button></p>
+    {% for field, errmsgs in form.errors.items() %}
+      {% for errmsg in errmsgs %}
+      <p class="w3-panel w3-border-left w3-border-red w3-pale-red">{{ field }} -- {{ errmsg }}</p>
+      {% endfor %}
+    {% endfor %}
   </div>
   <footer class="w3-container w3-theme">
     <p>An account will be automatically created if one does not exist already.</p>
