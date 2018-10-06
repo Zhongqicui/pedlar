@@ -57,8 +57,9 @@ def get_orders():
   rows = Order.query.filter_by(user_id=current_user.id).\
                      order_by(Order.created.desc()).\
                      limit(app.config['RECENT_ORDERS_SIZE']).all()
-  orders = rows_to_dicts(rows, ['id', 'agent', 'type', 'price_open', 'price_close',
-                                'profit', 'closed', 'created'])
+  orders = rows_to_dicts(rows, ['id', 'agent', 'type', 'price_open',
+                                'volume', 'price_close', 'profit',
+                                'closed', 'created'])
   return orders
 
 @app.route('/')
@@ -101,12 +102,13 @@ def trade():
     # Record the new order
     order = Order(id=resp['order_id'], user_id=current_user.id,
                   type="BUY" if req['action'] == 2 else "SELL",
-                  agent=agent_name, price_open=round(resp['price'], 5))
+                  agent=agent_name, price_open=round(resp['price'], 5),
+                  volume=req['volume'])
     db.session.add(order)
     db.session.commit()
     # Send order update
-    socketio.emit('order', rows_to_dicts([order], ['id', 'agent', 'type', 'price_open', 'price_close',
-                                                   'profit', 'closed', 'created'])[0],
+    socketio.emit('order', rows_to_dicts([order], ['id', 'agent', 'type', 'price_open', 'volume',
+                                                   'price_close', 'profit', 'closed', 'created'])[0],
                   room=current_user.username)
   elif resp['retcode'] == 0 and req['action'] == 1:
     # Close the recorded order
@@ -119,8 +121,8 @@ def trade():
     # Send leaderboard update
     socketio.emit('leaderboard', get_leaders())
     # Send order update
-    socketio.emit('order', rows_to_dicts([order], ['id', 'agent', 'type', 'price_open', 'price_close',
-                                                   'profit', 'closed', 'created'])[0],
+    socketio.emit('order', rows_to_dicts([order], ['id', 'agent', 'type', 'price_open', 'volume',
+                                                   'price_close', 'profit', 'closed', 'created'])[0],
                   room=current_user.username)
   return jsonify(resp)
 

@@ -62,6 +62,7 @@ class Order(db.Model):
   agent = db.Column(db.String(128))
   type = db.Column(db.String(8), nullable=False)
   price_open = db.Column(db.Float(), nullable=False)
+  volume = db.Column(db.Float(), nullable=False)
   price_close = db.Column(db.Float())
   profit = db.Column(db.Float())
   closed = db.Column(db.DateTime())
