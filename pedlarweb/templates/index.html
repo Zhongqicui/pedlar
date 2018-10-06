@@ -76,7 +76,7 @@
     <div class="w3-card w3-white">
       <div class="w3-container">
         <div id="chatbox" class="w3-panel w3-border" style="min-height:60vh;max-height:60vh;overflow-y:scroll">
-          <p v-for="m in messages" style="white-space:pre-wrap"><b v-bind:class="{ 'w3-text-theme': current_username == m.username }">{{ m.username }}:</b> {{ m.msg }}</p>
+          <p v-for="m in messages" style="margin:0px;white-space:pre-wrap;"><b v-bind:class="{ 'w3-text-theme': current_username == m.username }">{{ m.username }}:</b> {{ m.msg }}</p>
         </div>
         <textarea id="chatinput" v-on:keypress.enter.exact.prevent="sendchat" class="w3-input w3-margin-bottom" style="max-width:100%" placeholder="message"></textarea>
       </div>
@@ -123,8 +123,11 @@ var app = new Vue({
     },
     addmessage: function(msg) {
       this.messages.push(msg);
-      var container = this.$el.querySelector("#chatbox");
-      container.scrollTop = container.scrollHeight;
+      this.$nextTick(function() {
+        var container = this.$el.querySelector("#chatbox");
+        container.scroll({top: container.scrollHeight, behavior: 'smooth'});
+      });
+      //container.scrollTop = container.scrollHeight;
     }
   }
 });
