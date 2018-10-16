@@ -109,6 +109,14 @@ To get the ticker and broker components up and running you need to:
  5. Once the ticker and broker is compiled, you can attach them to any chart that you want the tick updates to be sent and trade orders to be handled. You can run multiple at different ports as well. From "Options" the "Allow DLL Imports" needs to be enabled for obvious reasons.
  6. If you get DLL import error, it is most likely because the ZeroMQ DLL isn't happy or the C++ runtime is not compatible.
 
+
+### Running Local Broker
+As an alternative to executing trades live, there is `lbroker.py` that implements same interface as the actual MT5 broker but instead executes the orders locally based on the latest ticks provided by MT5. It is a simple stand-alone script:
+
+```bash
+python3 lbroker.py -h
+```
+
 ### Running Web Server
 The web server is a standard [Flask](http://flask.pocoo.org/) application organised into the `pedlarweb` package. You need to create a `instance/config.py` to customise the default values. Once the `config.py` options are as desired, a database can be initialised:
 
