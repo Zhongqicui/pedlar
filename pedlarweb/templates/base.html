@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html>
   <head>
+    {% if config['GOOGLE_ANALYTICS'] %}
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ config['GOOGLE_ANALYTICS'] }}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '{{ config['GOOGLE_ANALYTICS'] }}');
+    </script>
+    <!-- End of GA -->
+    {% endif %}
     <title>Pedlar {% block title %}{% endblock %}</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
