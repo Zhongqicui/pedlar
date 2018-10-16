@@ -71,7 +71,7 @@ def handle_broker():
       profit = diff*ARGS.leverage*order.volume*1000*(1/closep)
       resp = (order_id, closep, round(profit, 2), 0)
       logger.info("CLOSING: %s", resp)
-    elif action == 2 or action == 3: # Buy - Sell
+    elif action in (2, 3): # Buy - Sell
       oprice = ASK if action == 2 else BID
       order = Order(id=nextid, price=oprice, volume=volume, type=action)
       ORDERS[nextid] = order

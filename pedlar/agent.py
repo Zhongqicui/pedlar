@@ -14,7 +14,7 @@ logger.info("pyzmq: %s", zmq.pyzmq_version())
 
 # pylint: disable=broad-except,too-many-instance-attributes,too-many-arguments
 
-Order = namedtuple('Order', ['id', 'price', 'type'])
+Order = namedtuple('Order', ['id', 'price', 'volume', 'type'])
 
 # Context are thread safe already,
 # we'll create one global one for all agents
@@ -137,11 +137,11 @@ class Agent:
         # Place order locally
         bidaskidx = 0 if otype == "buy" else 1
         order = Order(id=self._last_order_id+1, price=self._last_tick[bidaskidx],
-                      type=otype)
+                      volume=volume, type=otype)
       else:
         # Contact pedlarweb
         resp = self.talk(volume=volume, action=2 if otype == "buy" else 3)
-        order = Order(id=resp['order_id'], price=resp['price'], type=otype)
+        order = Order(id=resp['order_id'], price=resp['price'], volume=volume, type=otype)
       self._last_order_id = order.id
       self.orders[order.id] = order
       self.on_order(order)
@@ -178,8 +178,10 @@ class Agent:
       if self.backtest:
         # Execute order locally
         order = self.orders.pop(oid)
-        bidaskidx = 0 if order.type == "sell" else 1
-        profit = (self._last_tick[bidaskidx]-order.price)*1000
+        closep = self._last_tick[0 if order.type == "buy" else 1]
+        diff = closep - order.price if order.type == "buy" else order.price - closep
+        # Assume 100 for leverage for now
+        profit = round(diff*100*order.volume*1000*(1/closep), 2)
         logger.info("Closed order %s with profit %s", oid, profit)
         self.balance += profit
         self.on_order_close(order, profit)
